@@ -1,0 +1,22 @@
+# ── Job Aggregator Bot v3 (AI Edition) — Python Dependencies ──────────────────
+# Install with:  pip install -r requirements.txt
+
+# HTTP client — fetching all APIs and RSS feeds
+requests>=2.31.0,<3.0.0
+
+# RSS / Atom feed parser
+feedparser>=6.0.10,<7.0.0
+
+# HTML parser — strips HTML, scrapes Telegram channels and Dribbble
+beautifulsoup4>=4.12.0,<5.0.0
+lxml>=4.9.0
+
+# Google Sheets — duplicate tracking database
+gspread>=5.12.0,<6.0.0
+oauth2client>=4.1.3,<5.0.0
+
+# Environment variables — loads .env file locally
+python-dotenv>=1.0.0,<2.0.0
+
+# AI Integration — Google Gemini API for smart scoring and summarization
+google-genai

@@ -1,0 +1,77 @@
+# ==============================================================================
+#  .github/workflows/main.yml  —  Job Aggregator Bot v2
+# ==============================================================================
+#  Triggers:
+#   • Cron: every 6 hours (00:00, 06:00, 12:00, 18:00 UTC)
+#   • Manual: "Run workflow" button in the Actions tab
+#
+#  Required Secrets (Repo → Settings → Secrets and variables → Actions):
+#    TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID,
+#    GOOGLE_SHEET_CREDENTIALS_JSON, GOOGLE_SHEET_ID
+# ==============================================================================
+
+name: 🤖 Job Aggregator Bot v2
+
+on:
+  schedule:
+    # Every 6 hours — adjust to taste (https://crontab.guru)
+    # Every 3h:  "0 */3 * * *"   |   Twice/day: "0 8,20 * * *"
+    - cron: "0 */6 * * *"
+
+  # Adds a manual "Run workflow" button in the Actions UI
+  workflow_dispatch:
+    inputs:
+      debug_mode:
+        description: "Enable debug mode? (prints scores, skips Telegram sends)"
+        required: false
+        default: "false"
+        type: choice
+        options: ["false", "true"]
+      send_summary:
+        description: "Send run summary to Telegram?"
+        required: false
+        default: "true"
+        type: choice
+        options: ["true", "false"]
+      min_score:
+        description: "Minimum match score to alert (1–10)"
+        required: false
+        default: "5"
+
+jobs:
+  run-job-bot:
+    runs-on: ubuntu-latest
+    name: Fetch → Filter → Score → Alert
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: 📦 Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: 🚀 Run Job Aggregator Bot
+        env:
+          # Core credentials — always from Secrets
+          TELEGRAM_BOT_TOKEN:            ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:              ${{ secrets.TELEGRAM_CHAT_ID }}
+          GOOGLE_SHEET_CREDENTIALS_JSON: ${{ secrets.GOOGLE_SHEET_CREDENTIALS_JSON }}
+          GOOGLE_SHEET_ID:               ${{ secrets.GOOGLE_SHEET_ID }}
+          # Behaviour — use manual input for workflow_dispatch, else defaults
+          DEBUG_MODE:          ${{ github.event.inputs.debug_mode || 'false' }}
+          SEND_RUN_SUMMARY:    ${{ github.event.inputs.send_summary || 'false' }}
+          MIN_SCORE_TO_ALERT:  ${{ github.event.inputs.min_score || '5' }}
+          MAX_JOB_AGE_DAYS:    "14"
+        run: python main.py
+
+      - name: 📊 Show result
+        if: always()
+        run: echo "Finished at $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
