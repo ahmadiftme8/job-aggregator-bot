@@ -1154,13 +1154,13 @@ def format_message(job: dict, score: int, reasons: list[str], hashtags: list[str
 
     msg = (
         f"💼 *New Job Alert*\n"
-        f"┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄\n\n"
         f"📌 *{title}*\n"
         f"🏢 {company}\n"
-        f"📍 {location}\n"
-        f"💰 {salary}\n"
-        f"🕐 Posted: {age}\n\n"
         f"📊 *Match Score:* {label}\n"
+        f"💰 {salary}\n"
+        f"📍 {location}\n"
+        f"🕐 Posted: {age}\n\n"
+        
         f"`{bar}`\n\n"
     )
 
