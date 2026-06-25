@@ -214,9 +214,9 @@ JOB_SOURCES = [
 
     # ── Working Nomads (RSS) ───────────────────────────────────────────────
     {"name": "Working Nomads – Design",   "type": "rss", "category": "design",
-     "url": "https://www.workingnomads.com/feed?category=design-jobs"},
+     "url": "https://www.workingnomads.com/jobs?category=design-jobs&format=rss"},
     {"name": "Working Nomads – Frontend", "type": "rss", "category": "frontend",
-     "url": "https://www.workingnomads.com/feed?category=front-end-jobs"},
+     "url": "https://www.workingnomads.com/jobs?category=front-end-jobs&format=rss"},
 
     # ── Wellfound / AngelList (RSS) ───────────────────────────────────────
     {"name": "Wellfound", "type": "rss", "category": "startup",
@@ -267,18 +267,17 @@ JOB_SOURCES = [
      "url": "https://www.skipthedrive.com/feed/"},
 
     # ── Remote.co (RSS) ───────────────────────────────────────────────────
-    {"name": "Remote.co – Design",   "type": "rss", "category": "design",
-     "url": "https://remote.co/remote-jobs/designer/feed/"},
-    {"name": "Remote.co – Dev",      "type": "rss", "category": "frontend",
-     "url": "https://remote.co/remote-jobs/developer/feed/"},
+    # Remote.co disabled — consistently times out (>20s) from GitHub Actions
+    # {"name": "Remote.co – Design", "type": "rss", "url": "https://remote.co/remote-jobs/designer/feed/"},
+    # {"name": "Remote.co – Dev",    "type": "rss", "url": "https://remote.co/remote-jobs/developer/feed/"},
 
     # ── Arc.dev (JSON API) ────────────────────────────────────────────────
     {"name": "Arc.dev", "type": "arc_api", "category": "frontend",
-     "url": "https://arc.dev/jobs/api/v1/jobs?q=frontend+designer&remote=true"},
+     "url": "https://arc.dev/remote-jobs/frontend-developer"},
 
     # ── Relocate.me (JSON API) ────────────────────────────────────────────
     {"name": "Relocate.me", "type": "relocate_api", "category": "europe",
-     "url": "https://relocate.me/api/v1/jobs?skills=frontend,design"},
+     "url": "https://relocate.me/api/v0/jobs?skills=frontend,design"},
 
     # ── Berlin Startup Jobs (RSS) ─────────────────────────────────────────
     {"name": "Berlin Startup Jobs", "type": "rss", "category": "europe",
@@ -286,7 +285,7 @@ JOB_SOURCES = [
 
     # ── Tech Jobs For Good (RSS) ──────────────────────────────────────────
     {"name": "Tech Jobs For Good", "type": "rss", "category": "mixed",
-     "url": "https://www.techjobsforgood.com/jobs/feed/"},
+     "url": "https://techjobsforgood.com/jobs/rss/"},
 
     # ── VanHack (RSS) ─────────────────────────────────────────────────────
     {"name": "VanHack", "type": "rss", "category": "europe",
@@ -294,7 +293,7 @@ JOB_SOURCES = [
 
     # ── EURES (EU Jobs Portal) — HTML scrape ─────────────────────────────
     {"name": "EURES EU Jobs", "type": "eures_api", "category": "europe",
-     "url": "https://eures.ec.europa.eu/api/search?query=designer&page=1&pageSize=20"},
+     "url": "https://jobapi.eures.ec.europa.eu/api/search?query=designer&page=1&pageSize=20"},
 
     # ── Otta (JSON API) ───────────────────────────────────────────────────
     {"name": "Otta", "type": "otta_api", "category": "mixed",
@@ -593,8 +592,11 @@ def is_within_age_limit(job: dict) -> bool:
 #  SECTION 7 — FILTERS
 # ==============================================================================
 
-def _norm(text: str) -> str:
-    return (text or "").lower()
+def _norm(text) -> str:
+    """Safely normalise any value to a lowercase string."""
+    if isinstance(text, list):
+        text = " ".join(str(i) for i in text)
+    return (str(text) if text else "").lower()
 
 
 def passes_inclusion_filter(job: dict) -> bool:
@@ -824,7 +826,7 @@ def parse_himalayas(source: dict) -> list[dict]:
                 "title":       item.get("title",""),
                 "company":     (item.get("companyName") or
                                 (item.get("company") or {}).get("name","Unknown")),
-                "location":    item.get("locationRestrictions","Remote") or "Remote",
+                "location":    (", ".join(item["locationRestrictions"]) if isinstance(item.get("locationRestrictions"), list) else item.get("locationRestrictions","Remote")) or "Remote",
                 "salary":      item.get("salary",""),
                 "apply_url":   item.get("applicationUrl",""),
                 "description": _strip_html(item.get("description","")),
@@ -994,7 +996,7 @@ def parse_arc(source: dict) -> list[dict]:
                 "id":          item.get("id", _make_id(item.get("applyUrl",""), item.get("title",""))),
                 "title":       item.get("title",""),
                 "company":     item.get("companyName","Unknown"),
-                "location":    item.get("locationNames","Remote") or "Remote",
+                "location":    (", ".join(item["locationNames"]) if isinstance(item.get("locationNames"), list) else item.get("locationNames","Remote")) or "Remote",
                 "salary":      item.get("salaryRange",""),
                 "apply_url":   item.get("applyUrl",""),
                 "description": _strip_html(item.get("description","")),
